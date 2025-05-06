@@ -46,7 +46,7 @@ Route::put('/users/{id}/avatar', [UserController::class, 'updateAvatar']);
 
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::apiResource('/moods', MoodController::class);
+    Route::apiResource('/moods', MoodController::class)->names('api.moods');
 
     Route::get('/mood-types', [MoodTypeController::class, 'index']);
 
