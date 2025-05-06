@@ -11,33 +11,26 @@ class AvatarController extends Controller
     // Menampilkan daftar semua avatar
     public function index()
     {
-        // Ambil semua data avatar dari database
-        $avatars = Avatar::all();
-
-        // Jika data ada, modifikasi path avatar menggunakan asset() untuk menghasilkan URL lengkap
-        $avatars = $avatars->map(function ($avatar) {
-            // Pastikan avatar_path yang ada di database mengarah ke lokasi yang benar
-            $avatar->avatar_path = asset('avatars/' . $avatar->avatar_path);
+        $avatars = Avatar::all()->map(function ($avatar) {
+            // Langsung mengonversi path avatar menjadi URL lengkap yang berada di dalam folder public
+            $avatar->avatar_path = asset($avatar->avatar_path); // Misalnya, asset('avatars/avatar1.jpg')
             return $avatar;
         });
-
-        // Kembalikan respons dalam format JSON
+    
         return response()->json($avatars);
     }
 
     // Menampilkan data avatar berdasarkan ID
     public function show($id)
     {
-        // Cari avatar berdasarkan ID
         $avatar = Avatar::find($id);
 
-        // Jika avatar ditemukan, modifikasi path dan kembalikan dalam format JSON
         if ($avatar) {
-            $avatar->avatar_path = asset('avatars/' . $avatar->avatar_path);
+            // Langsung mengonversi path avatar menjadi URL lengkap
+            $avatar->avatar_path = asset($avatar->avatar_path); // Misalnya, asset('avatars/avatar1.jpg')
             return response()->json($avatar);
         }
 
-        // Jika tidak ditemukan, kembalikan respons 404
         return response()->json(['message' => 'Avatar not found'], 404);
     }
 }
