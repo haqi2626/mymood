@@ -40,10 +40,12 @@ Route::post('reset-password', [NewPasswordController::class, 'store']);
 // Verifikasi email (setelah register)
 Route::get('email/verify/{id}/{hash}', [VerifyEmailController::class, '__invoke'])->name('verification.verify');
 
+
+Route::middleware('auth:sanctum')->group(function () {
 Route::get('/avatars', [AvatarController::class, 'index']);
 Route::get('/avatars/{id}', [AvatarController::class, 'show']);
-Route::put('/users/{id}/avatar', [UserController::class, 'updateAvatar']);
-
+Route::put('/user/avatar', [UserController::class, 'updateAvatar']);
+});
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/moods', MoodController::class)->names('api.moods');

@@ -33,4 +33,5 @@ class AvatarController extends Controller
 
         return response()->json(['message' => 'Avatar not found'], 404);
     }
+    
 }
