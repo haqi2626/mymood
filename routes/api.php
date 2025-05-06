@@ -41,6 +41,7 @@ Route::post('reset-password', [NewPasswordController::class, 'store']);
 Route::get('email/verify/{id}/{hash}', [VerifyEmailController::class, '__invoke'])->name('verification.verify');
 
 Route::get('/avatars', [AvatarController::class, 'index']);
+Route::get('/avatars/{id}', [AvatarController::class, 'show']);
 Route::put('/users/{id}/avatar', [UserController::class, 'updateAvatar']);
 
 

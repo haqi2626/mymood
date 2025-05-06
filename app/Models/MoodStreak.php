@@ -15,4 +15,13 @@ class MoodStreak extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+        public function moods()
+    {
+        return $this->hasMany(Mood::class, 'user_id', 'user_id')
+            ->whereColumn('date', '>=', 'mood_streaks.start_date')
+            ->whereColumn('date', '<=', 'mood_streaks.end_date')
+            ->with('moodType');
+    }
+
 }
