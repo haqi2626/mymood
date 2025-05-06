@@ -31,7 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // Route bebas autentikasi
-Route::apiResource('quotes', QuoteController::class);
+// Route::apiResource('quotes', QuoteController::class);
 Route::post('login',[AuthController::class,'login']);
 Route::post('register', [AuthController::class, 'register']);
 Route::post('forgot-password', [PasswordResetLinkController::class, 'store']);
