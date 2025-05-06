@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             MoodTypeSeeder::class,
             TagSeeder::class,
-            // MoodSeeder::class,
+            AvatarSeeder::class,
         ]);
     }
 
