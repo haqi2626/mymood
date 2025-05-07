@@ -39,6 +39,8 @@ class AuthController extends Controller
         //generate token
         $token = $user->createToken('token')->plainTextToken;
 
+        $user->load('avatar');
+
         return response()->json([
             'token' => $token,
             'user' => $user
@@ -73,7 +75,10 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'avatar_id' => $request->avatar_id, 
         ]);
+
+        $user->load('avatar');
 
         return response()->json([
             'message' => 'User berhasil terdaftar',
