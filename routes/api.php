@@ -50,9 +50,9 @@ Route::put('/user/avatar', [UserController::class, 'updateAvatar']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/moods', MoodController::class)->names('api.moods');
 
-    
+    Route::get('/mood-types', [MoodTypeController::class, 'index']);
+
     Route::get('/tags', [TagController::class, 'index']);
     Route::post('/tags', [TagController::class, 'store']);
 });
 
-Route::get('/mood-types', [MoodTypeController::class, 'index']);
