@@ -3,24 +3,26 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
-    public function updateAvatar(Request $request)
+    public function updateAvatar(Request $request, $id)
     {
         $request->validate([
             'avatar_id' => 'required|exists:avatars,id',
         ]);
-
-        $user = $request->user(); // atau Auth::user()
+    
+        $user = User::findOrFail($id);
         $user->avatar_id = $request->avatar_id;
         $user->save();
-
+    
         return response()->json([
             'message' => 'Avatar updated successfully',
             'user' => $user,
         ]);
     }
+    
 }
