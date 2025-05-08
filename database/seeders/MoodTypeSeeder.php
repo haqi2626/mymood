@@ -10,12 +10,12 @@ class MoodTypeSeeder extends Seeder
     public function run()
     {
         $types = [
-            ['name' => 'Senang', 'image_url' => 'public/emojies/smile.jpg'],
-            ['name' => 'Sedih', 'image_url' => 'public/emojies/sedih.jpg'],
-            ['name' => 'Marah', 'image_url' => 'public/emojies/marah.jpg'],
-            ['name' => 'Cemas', 'image_url' => 'public/emojies/cemas.jpg'],
-            ['name' => 'Tenang', 'image_url' => 'public/emojies/tenang.jpg'],
-            ['name' => 'biasa aja', 'image_url' => 'public/emojies/biasaaja.jpg'],
+            ['name' => 'Senang', 'image_url' => 'emojies/smile.jpg'],
+            ['name' => 'Sedih', 'image_url' => 'emojies/sedih.jpg'],
+            ['name' => 'Marah', 'image_url' => 'emojies/marah.jpg'],
+            ['name' => 'Cemas', 'image_url' => 'emojies/cemas.jpg'],
+            ['name' => 'Tenang', 'image_url' => 'emojies/tenang.jpg'],
+            ['name' => 'biasa aja', 'image_url' => 'emojies/biasaaja.jpg'],
         ];
 
         foreach ($types as $type) {
