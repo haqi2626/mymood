@@ -3,23 +3,21 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\File;
 use App\Models\MoodType;
 
 class MoodTypeController extends Controller
 {
     public function index()
     {
-        $images = [];
-        $directory = public_path('emojies'); // Menunjuk ke folder public/emojies
+        $moodTypes = MoodType::all()->map(function ($mood) {
+            // Pastikan image_url mengarah ke public path
+            $mood->image_url = asset($mood->image_url);
+            return $mood;
+        });
     
-        // Ambil semua file gambar dalam folder
-        foreach (File::files($directory) as $file) {
-            $images[] = 'https://mymood.mymood.my.id/emojies/' . $file->getFilename();
-        }
-    
-        return response()->json(['data' => $images]);
+        return response()->json(['data' => $moodTypes]);
     }
+    
     
     
 }
