@@ -9,9 +9,16 @@ class MoodTypeController extends Controller
 {
     public function index()
     {
-        return MoodType::select( 'name', 'image_url')->get(); // Pastikan image_url ada dalam respons
-    }
+        $moods = MoodType::all();
     
+        foreach ($moods as $mood) {
+            $mood->image_url = asset(str_replace('public/', '', $mood->image_url));
+        }
+    
+        return response()->json([
+            'data' => $moods
+        ]);
+    }
     
     
 }
