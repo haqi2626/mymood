@@ -2,14 +2,11 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Hash;
-
-use App\Models\User;
-use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Api\AvatarController;
 use App\Http\Controllers\Api\MoodController;
+use App\Http\Controllers\Api\MoodStreakController;
 use App\Http\Controllers\Api\MoodTypeController;
 use App\Http\Controllers\Api\TagController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
@@ -25,19 +22,16 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 
 // Group route yang memerlukan autentikasi
 Route::middleware('auth:sanctum')->group(function () {
-    // Route::apiResource('moods', MoodController::class);
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy']);
     Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store']);
 });
 
-// Route bebas autentikasi
-// Route::apiResource('quotes', QuoteController::class);
 Route::post('login',[AuthController::class,'login']);
 Route::post('register', [AuthController::class, 'register']);
 Route::post('forgot-password', [PasswordResetLinkController::class, 'store']);
 Route::post('reset-password', [NewPasswordController::class, 'store']);
 
-// Verifikasi email (setelah register)
+
 Route::get('email/verify/{id}/{hash}', [VerifyEmailController::class, '__invoke'])->name('verification.verify');
 
 
@@ -56,3 +50,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tags', [TagController::class, 'store']);
 });
 
+Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('mood-streaks', MoodStreakController::class); 
+});
