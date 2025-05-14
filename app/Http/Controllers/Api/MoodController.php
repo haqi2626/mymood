@@ -75,9 +75,21 @@ public function store(Request $request)
         ], 422);
     }
 
-    $moodData = $request->except('tags');
-    $moodData['user_id'] = Auth::id();
+    $user = Auth::user();
+    $date = Carbon::parse($request->date);
 
+    // Cegah multiple mood di tanggal sama
+    $existingMood = Mood::where('user_id', $user->id)->whereDate('date', $date)->first();
+    if ($existingMood) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Mood for this date already exists'
+        ], 409); // Conflict
+    }
+
+    // Buat mood baru
+    $moodData = $request->except('tags');
+    $moodData['user_id'] = $user->id;
     $mood = Mood::create($moodData);
 
     if ($request->has('tags')) {
@@ -85,9 +97,6 @@ public function store(Request $request)
     }
 
     // === MoodStreak logic ===
-    $date = Carbon::parse($request->date);
-    $user = Auth::user();
-
     $latestStreak = MoodStreak::where('user_id', $user->id)
         ->orderByDesc('end_date')
         ->first();
@@ -99,14 +108,16 @@ public function store(Request $request)
             'streak_count' => $latestStreak->streak_count + 1,
         ]);
         $currentStreak = $latestStreak;
-    } elseif (!$latestStreak || !$latestStreak->end_date->isSameDay($date)) {
-        // Mulai streak baru
+    } elseif (!$latestStreak || $date->gt($latestStreak->end_date)) {
+        // Mulai streak baru (hanya jika tanggal lebih besar dari streak terakhir)
         $currentStreak = MoodStreak::create([
             'user_id' => $user->id,
             'start_date' => $date,
             'end_date' => $date,
             'streak_count' => 1,
         ]);
+    } else {
+        $currentStreak = null; // Tidak update streak karena bukan tanggal urutan
     }
 
     $mood->load('moodType', 'tags');
@@ -120,6 +131,7 @@ public function store(Request $request)
         ]
     ], 201);
 }
+
 
 
 
