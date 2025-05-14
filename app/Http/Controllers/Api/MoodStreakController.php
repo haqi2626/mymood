@@ -3,80 +3,105 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Mood;
 use App\Models\MoodStreak;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 
-class MoodStreakController extends Controller
+class MoodController extends Controller
 {
+    public function store(Request $request)
+    {
+        $request->validate([
+            'mood_type_id' => 'required|exists:mood_types,id',
+        ]);
+
+        $user = Auth::user();
+        $today = Carbon::today();
+
+        // Cek apakah user sudah isi mood hari ini
+        $existingMood = Mood::where('user_id', $user->id)
+            ->whereDate('date', $today)
+            ->first();
+
+        if ($existingMood) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda sudah mengisi mood untuk hari ini.',
+            ], 409); // Conflict
+        }
+
+        // Simpan mood hari ini
+        $mood = Mood::create([
+            'user_id' => $user->id,
+            'mood_type_id' => $request->mood_type_id,
+            'date' => $today,
+        ]);
+
+        // Mood Streak Logic
+        $latestStreak = MoodStreak::where('user_id', $user->id)
+            ->orderByDesc('end_date')
+            ->first();
+
+        $message = null;
+
+        if ($latestStreak && $latestStreak->end_date->copy()->addDay()->isSameDay($today)) {
+            // Lanjutkan streak
+            $newCount = $latestStreak->streak_count + 1;
+            $latestStreak->update([
+                'end_date' => $today,
+                'streak_count' => $newCount,
+            ]);
+
+            // Pesan motivasi
+            if (in_array($newCount, [3, 5, 7, 14, 30])) {
+                $message = "Keren! Anda sudah mengisi mood selama $newCount hari berturut-turut 🎉";
+            }
+        } else {
+            // Buat streak baru
+            MoodStreak::create([
+                'user_id' => $user->id,
+                'start_date' => $today,
+                'end_date' => $today,
+                'streak_count' => 1,
+            ]);
+
+            $message = "Semangat! Mood streak baru dimulai hari ini 😊";
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $mood,
+            'message' => $message,
+        ]);
+    }
+
+    // (Opsional) Tampilkan semua mood milik user
     public function index()
     {
         $user = Auth::user();
+        $moods = Mood::with('moodType')
+            ->where('user_id', $user->id)
+            ->orderByDesc('date')
+            ->get();
 
-        $streaks = MoodStreak::with(['moods.moodType'])
-                    ->where('user_id', $user->id)
-                    ->get();
-
-        return response()->json(['success' => true, 'data' => $streaks]);
+        return response()->json([
+            'success' => true,
+            'data' => $moods
+        ]);
     }
 
+    // (Opsional) Detail satu mood
     public function show($id)
     {
-        $streak = MoodStreak::with(['moods' => function($query) {
-            $query->with('moodType');
-        }])->findOrFail($id);
+        $mood = Mood::with('moodType')
+            ->where('user_id', Auth::id())
+            ->findOrFail($id);
 
         return response()->json([
             'success' => true,
-            'data' => $streak
+            'data' => $mood
         ]);
     }
-
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'streak_count' => 'required|integer|min:0',
-        ]);
-
-        $user = Auth::user();
-
-        $streak = MoodStreak::create([
-            'user_id' => $user->id,
-            'start_date' => $validated['start_date'],
-            'end_date' => $validated['end_date'],
-            'streak_count' => $validated['streak_count'],
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'data' => $streak,
-            'message' => 'Mood streak berhasil dibuat!'
-        ]);
-    }
-
-    // kalau perlu
-    public function update(Request $request, $id)
-    {
-        $validated = $request->validate([
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'streak_count' => 'required|integer|min:0',
-        ]);
-
-        $streak = MoodStreak::where('user_id', Auth::id())->findOrFail($id);
-        $streak->update($validated);
-
-        return response()->json(['success' => true, 'data' => $streak]);
-    }
-
-    public function destroy($id)
-    {
-        $streak = MoodStreak::where('user_id', Auth::id())->findOrFail($id);
-        $streak->delete();
-
-        return response()->json(['success' => true, 'message' => 'Mood streak berhasil dihapus.']);
-    }
-
 }
