@@ -93,7 +93,7 @@ public function store(Request $request)
         ->orderByDesc('end_date')
         ->first();
 
-    if ($latestStreak && $latestStreak->end_date->copy()->addDay()->isSameDay($date)) {
+    if ($latestStreak && Carbon::parse($latestStreak->end_date)->copy()->addDay()->isSameDay($date)) {
         // Lanjutkan streak
         $latestStreak->update([
             'end_date' => $date,
