@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 
-class MoodController extends Controller
+class MoodStreakController extends Controller
 {
     public function store(Request $request)
     {
