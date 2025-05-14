@@ -15,12 +15,12 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 
-// Route untuk mendapatkan user yang sedang login (menggunakan Sanctum)
+
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// Group route yang memerlukan autentikasi
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy']);
     Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store']);
