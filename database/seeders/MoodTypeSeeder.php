@@ -16,6 +16,9 @@ class MoodTypeSeeder extends Seeder
             ['name' => 'Cemas', 'image_url' => 'emojies/cemas.jpg'],
             ['name' => 'Tenang', 'image_url' => 'emojies/tenang.jpg'],
             ['name' => 'biasa aja', 'image_url' => 'emojies/biasaaja.jpg'],
+            ['name' => 'biasa aja', 'image_url' => 'emojies/malas.jpg'],
+            ['name' => 'biasa aja', 'image_url' => 'emojies/malu.jpg'],
+            ['name' => 'biasa aja', 'image_url' => 'emojies/suka.jpg'],
         ];
 
         foreach ($types as $type) {
