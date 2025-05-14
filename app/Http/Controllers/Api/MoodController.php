@@ -8,6 +8,8 @@ use App\Models\MoodType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use App\Models\MoodStreak;
+use Illuminate\Support\Carbon;
 
 class MoodController extends Controller
 {
@@ -53,71 +55,72 @@ class MoodController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'mood_type_id' => 'required|exists:mood_types,id',
-            'color' => 'nullable|string|max:7',
-            'emoji' => 'nullable|string|max:10',
-            'note' => 'nullable|string',
-            'date' => 'required|date',
-            'tags' => 'nullable|array',
-            'tags.*' => 'exists:tags,id'
-        ]);
+public function store(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'mood_type_id' => 'required|exists:mood_types,id',
+        'color' => 'nullable|string|max:7',
+        'emoji' => 'nullable|string|max:10',
+        'note' => 'nullable|string',
+        'date' => 'required|date',
+        'tags' => 'nullable|array',
+        'tags.*' => 'exists:tags,id'
+    ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation Error',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        // Create the mood
-        $moodData = $request->except('tags');
-        $moodData['user_id'] = Auth::id();
-        
-        $mood = Mood::create($moodData);
-
-        // Attach tags if provided
-        if ($request->has('tags')) {
-            $mood->tags()->attach($request->tags);
-        }
-
-        // Load relationships for response
-        $mood->load('moodType', 'tags');
-
+    if ($validator->fails()) {
         return response()->json([
-            'success' => true,
-            'message' => 'Mood created successfully',
-            'data' => $mood
-        ], 201);
+            'success' => false,
+            'message' => 'Validation Error',
+            'errors' => $validator->errors()
+        ], 422);
     }
 
-    /**
-     * Display the specified mood.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        $mood = Mood::with('moodType', 'tags')
-            ->where('user_id', Auth::id())
-            ->find($id);
+    $moodData = $request->except('tags');
+    $moodData['user_id'] = Auth::id();
 
-        if (!$mood) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Mood not found or does not belong to user'
-            ], 404);
-        }
+    $mood = Mood::create($moodData);
 
-        return response()->json([
-            'success' => true,
-            'data' => $mood
+    if ($request->has('tags')) {
+        $mood->tags()->attach($request->tags);
+    }
+
+    // === MoodStreak logic ===
+    $date = Carbon::parse($request->date);
+    $user = Auth::user();
+
+    $latestStreak = MoodStreak::where('user_id', $user->id)
+        ->orderByDesc('end_date')
+        ->first();
+
+    if ($latestStreak && $latestStreak->end_date->copy()->addDay()->isSameDay($date)) {
+        // Lanjutkan streak
+        $latestStreak->update([
+            'end_date' => $date,
+            'streak_count' => $latestStreak->streak_count + 1,
+        ]);
+        $currentStreak = $latestStreak;
+    } elseif (!$latestStreak || !$latestStreak->end_date->isSameDay($date)) {
+        // Mulai streak baru
+        $currentStreak = MoodStreak::create([
+            'user_id' => $user->id,
+            'start_date' => $date,
+            'end_date' => $date,
+            'streak_count' => 1,
         ]);
     }
+
+    $mood->load('moodType', 'tags');
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Mood created successfully',
+        'data' => [
+            'mood' => $mood,
+            'streak' => $currentStreak
+        ]
+    ], 201);
+}
+
 
     /**
      * Update the specified mood in storage.
