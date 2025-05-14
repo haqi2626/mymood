@@ -92,6 +92,10 @@ public function store(Request $request)
         ->orderByDesc('end_date')
         ->first();
 
+    if ($latestStreak) {
+        $latestStreak->end_date = Carbon::parse($latestStreak->end_date);
+    }
+
     if ($latestStreak && $latestStreak->end_date->copy()->addDay()->isSameDay($date)) {
         // Lanjutkan streak
         $latestStreak->update([
