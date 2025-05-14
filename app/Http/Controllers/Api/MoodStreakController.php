@@ -15,6 +15,9 @@ class MoodStreakController extends Controller
     {
         $request->validate([
             'mood_type_id' => 'required|exists:mood_types,id',
+            'note' => 'nullable|string', // Validasi untuk note
+            'tags' => 'nullable|array', // Validasi untuk tags
+            'tags.*' => 'exists:tags,id', // Validasi untuk tag ID
         ]);
 
         $user = Auth::user();
@@ -33,11 +36,19 @@ class MoodStreakController extends Controller
         }
 
         // Simpan mood hari ini
-        $mood = Mood::create([
+        $moodData = [
             'user_id' => $user->id,
             'mood_type_id' => $request->mood_type_id,
             'date' => $today,
-        ]);
+            'note' => $request->note, // Menyimpan note
+        ];
+        
+        $mood = Mood::create($moodData);
+
+        // Menyimpan tags jika ada
+        if ($request->has('tags')) {
+            $mood->tags()->attach($request->tags);
+        }
 
         // Mood Streak Logic
         $latestStreak = MoodStreak::where('user_id', $user->id)
@@ -81,7 +92,7 @@ class MoodStreakController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $moods = Mood::with('moodType')
+        $moods = Mood::with('moodType', 'tags') // Mengambil tags bersama moodType
             ->where('user_id', $user->id)
             ->orderByDesc('date')
             ->get();
@@ -95,7 +106,7 @@ class MoodStreakController extends Controller
     // (Opsional) Detail satu mood
     public function show($id)
     {
-        $mood = Mood::with('moodType')
+        $mood = Mood::with('moodType', 'tags') // Mengambil tags bersama moodType
             ->where('user_id', Auth::id())
             ->findOrFail($id);
 

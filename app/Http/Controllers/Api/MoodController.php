@@ -13,145 +13,120 @@ use Illuminate\Support\Carbon;
 
 class MoodController extends Controller
 {
-    /**
-     * Display a listing of the user's moods.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function index(Request $request)
     {
         $query = Mood::with('moodType', 'tags')->where('user_id', Auth::id());
         
-        // Filter by date range if provided
         if ($request->has('start_date') && $request->has('end_date')) {
             $query->whereBetween('date', [$request->start_date, $request->end_date]);
         }
         
-        // Filter by mood type if provided
         if ($request->has('mood_type_id')) {
             $query->where('mood_type_id', $request->mood_type_id);
         }
-        
-        // Filter by tag if provided
+
         if ($request->has('tag_id')) {
             $query->whereHas('tags', function($q) use ($request) {
                 $q->where('tags.id', $request->tag_id);
             });
         }
         
-        // Sort by date (default is descending - newest first)
         $sortDirection = $request->input('sort_direction', 'desc');
         $moods = $query->orderBy('date', $sortDirection)->get();
-        
+
         return response()->json([
             'success' => true,
             'data' => $moods
         ]);
     }
 
-    /**
-     * Store a newly created mood in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-public function store(Request $request)
-{
-    $validator = Validator::make($request->all(), [
-        'mood_type_id' => 'required|exists:mood_types,id',
-        'color' => 'nullable|string|max:7',
-        'emoji' => 'nullable|string|max:10',
-        'note' => 'nullable|string',
-        'date' => 'required|date',
-        'tags' => 'nullable|array',
-        'tags.*' => 'exists:tags,id'
-    ]);
-
-    if ($validator->fails()) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Validation Error',
-            'errors' => $validator->errors()
-        ], 422);
-    }
-
-    $user = Auth::user();
-    $date = Carbon::parse($request->date);
-
-    // Cegah multiple mood di tanggal sama
-    $existingMood = Mood::where('user_id', $user->id)->whereDate('date', $date)->first();
-    if ($existingMood) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Mood for this date already exists'
-        ], 409); // Conflict
-    }
-
-    // Buat mood baru
-    $moodData = $request->except('tags');
-    $moodData['user_id'] = $user->id;
-    $mood = Mood::create($moodData);
-
-    if ($request->has('tags')) {
-        $mood->tags()->attach($request->tags);
-    }
-
-    // === MoodStreak logic ===
-    $latestStreak = MoodStreak::where('user_id', $user->id)
-        ->orderByDesc('end_date')
-        ->first();
-
-    if ($latestStreak && $latestStreak->end_date->copy()->addDay()->isSameDay($date)) {
-        // Lanjutkan streak
-        $latestStreak->update([
-            'end_date' => $date,
-            'streak_count' => $latestStreak->streak_count + 1,
-        ]);
-        $currentStreak = $latestStreak;
-    } elseif (!$latestStreak || $date->gt($latestStreak->end_date)) {
-        // Mulai streak baru (hanya jika tanggal lebih besar dari streak terakhir)
-        $currentStreak = MoodStreak::create([
-            'user_id' => $user->id,
-            'start_date' => $date,
-            'end_date' => $date,
-            'streak_count' => 1,
-        ]);
-    } else {
-        $currentStreak = null; // Tidak update streak karena bukan tanggal urutan
-    }
-
-    $mood->load('moodType', 'tags');
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Mood created successfully',
-        'data' => [
-            'mood' => $mood,
-            'streak' => $currentStreak
-        ]
-    ], 201);
-}
-
-
-
-
-    /**
-     * Update the specified mood in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
+    public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'mood_type_id' => 'exists:mood_types,id',
+            'mood_type_id' => 'required|exists:mood_types,id',
             'color' => 'nullable|string|max:7',
             'emoji' => 'nullable|string|max:10',
             'note' => 'nullable|string',
-            'date' => 'date',
+            'date' => 'required|date',
             'tags' => 'nullable|array',
-            'tags.*' => 'exists:tags,id'
+            'tags.*' => 'exists:tags,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = Auth::user();
+        $date = Carbon::parse($request->date);
+
+        // Prevent duplicate mood entry for the same date
+        $existingMood = Mood::where('user_id', $user->id)->whereDate('date', $date)->first();
+        if ($existingMood) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mood for this date already exists'
+            ], 409);
+        }
+
+        // Create new mood
+        $moodData = $request->except('tags');
+        $moodData['user_id'] = $user->id;
+        $mood = Mood::create($moodData);
+
+        if ($request->has('tags')) {
+            $mood->tags()->attach($request->tags);
+        }
+
+        // === MoodStreak logic ===
+        $latestStreak = MoodStreak::where('user_id', $user->id)
+            ->orderByDesc('end_date')
+            ->first();
+
+        if ($latestStreak && $latestStreak->end_date->copy()->addDay()->isSameDay($date)) {
+            // Continue the streak
+            $latestStreak->update([
+                'end_date' => $date,
+                'streak_count' => $latestStreak->streak_count + 1,
+            ]);
+            $currentStreak = $latestStreak;
+        } elseif (!$latestStreak || $date->gt($latestStreak->end_date)) {
+            // Start a new streak
+            $currentStreak = MoodStreak::create([
+                'user_id' => $user->id,
+                'start_date' => $date,
+                'end_date' => $date,
+                'streak_count' => 1,
+            ]);
+        } else {
+            $currentStreak = null; // No streak update as the date is not in sequence
+        }
+
+        $mood->load('moodType', 'tags');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Mood created successfully',
+            'data' => [
+                'mood' => $mood,
+                'streak' => $currentStreak
+            ]
+        ], 201);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'mood_type_id' => 'nullable|exists:mood_types,id',
+            'color' => 'nullable|string|max:7',
+            'emoji' => 'nullable|string|max:10',
+            'note' => 'nullable|string',
+            'date' => 'nullable|date',
+            'tags' => 'nullable|array',
+            'tags.*' => 'exists:tags,id',
         ]);
 
         if ($validator->fails()) {
@@ -163,7 +138,6 @@ public function store(Request $request)
         }
 
         $mood = Mood::where('user_id', Auth::id())->find($id);
-
         if (!$mood) {
             return response()->json([
                 'success' => false,
@@ -174,7 +148,6 @@ public function store(Request $request)
         // Update the mood
         $mood->update($request->except('tags'));
 
-        // Sync tags if provided
         if ($request->has('tags')) {
             $mood->tags()->sync($request->tags);
         }
@@ -189,16 +162,9 @@ public function store(Request $request)
         ]);
     }
 
-    /**
-     * Remove the specified mood from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function destroy($id)
     {
         $mood = Mood::where('user_id', Auth::id())->find($id);
-
         if (!$mood) {
             return response()->json([
                 'success' => false,
@@ -206,10 +172,7 @@ public function store(Request $request)
             ], 404);
         }
 
-        // Detach all tags
         $mood->tags()->detach();
-        
-        // Delete the mood
         $mood->delete();
 
         return response()->json([
@@ -217,23 +180,15 @@ public function store(Request $request)
             'message' => 'Mood deleted successfully'
         ]);
     }
-    
-    /**
-     * Get mood statistics for the authenticated user
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
+
     public function getStatistics(Request $request)
     {
         $query = Mood::where('user_id', Auth::id());
-        
-        // Filter by date range if provided
+
         if ($request->has('start_date') && $request->has('end_date')) {
             $query->whereBetween('date', [$request->start_date, $request->end_date]);
         }
-        
-        // Get counts by mood type
+
         $moodTypeCounts = $query->get()
             ->groupBy('mood_type_id')
             ->map(function ($items, $key) {
@@ -245,7 +200,7 @@ public function store(Request $request)
                 ];
             })
             ->values();
-        
+
         return response()->json([
             'success' => true,
             'data' => [
