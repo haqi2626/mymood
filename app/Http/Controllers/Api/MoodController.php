@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Models\MoodStreak;
-use Illuminate\Support\Carbon;
+use Carbon\Carbon;
 
 class MoodController extends Controller
 {
@@ -86,23 +86,40 @@ class MoodController extends Controller
             ->orderByDesc('end_date')
             ->first();
 
-        if ($latestStreak && $latestStreak->end_date->copy()->addDay()->isSameDay($date)) {
-            // Continue the streak
-            $latestStreak->update([
-                'end_date' => $date,
-                'streak_count' => $latestStreak->streak_count + 1,
-            ]);
-            $currentStreak = $latestStreak;
-        } elseif (!$latestStreak || $date->gt($latestStreak->end_date)) {
-            // Start a new streak
+        $today = Carbon::today();
+
+        // Ensure end_date is a Carbon instance
+        if ($latestStreak && $latestStreak->end_date instanceof Carbon) {
+            $endDate = $latestStreak->end_date;
+
+            // Check if the date is consecutive to the latest streak
+            if ($endDate->copy()->addDay()->isSameDay($date)) {
+                // Continue the streak
+                $newCount = $latestStreak->streak_count + 1;
+                $latestStreak->update([
+                    'end_date' => $date,
+                    'streak_count' => $newCount,
+                ]);
+                $currentStreak = $latestStreak;
+            } elseif ($date->gt($endDate)) {
+                // Start a new streak
+                $currentStreak = MoodStreak::create([
+                    'user_id' => $user->id,
+                    'start_date' => $date,
+                    'end_date' => $date,
+                    'streak_count' => 1,
+                ]);
+            } else {
+                $currentStreak = null; // No streak update as the date is not in sequence
+            }
+        } else {
+            // No streak exists, start a new streak
             $currentStreak = MoodStreak::create([
                 'user_id' => $user->id,
                 'start_date' => $date,
                 'end_date' => $date,
                 'streak_count' => 1,
             ]);
-        } else {
-            $currentStreak = null; // No streak update as the date is not in sequence
         }
 
         $mood->load('moodType', 'tags');
