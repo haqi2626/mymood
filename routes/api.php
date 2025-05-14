@@ -51,5 +51,5 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::middleware('auth:sanctum')->group(function () {
-    // Route::apiResource('mood-streaks', MoodStreakController::class)->names('mood-streaks.index'); 
+    Route::apiResource('mood-streaks', MoodStreakController::class)->names('mood-streaks.index'); 
 });
