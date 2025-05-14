@@ -87,13 +87,12 @@ public function store(Request $request)
     // === MoodStreak logic ===
     $date = Carbon::parse($request->date);
     $user = Auth::user();
-    $currentStreak = null; // Inisialisasi default untuk menghindari error
 
     $latestStreak = MoodStreak::where('user_id', $user->id)
         ->orderByDesc('end_date')
         ->first();
 
-    if ($latestStreak && Carbon::parse($latestStreak->end_date)->copy()->addDay()->isSameDay($date)) {
+    if ($latestStreak && $latestStreak->end_date->copy()->addDay()->isSameDay($date)) {
         // Lanjutkan streak
         $latestStreak->update([
             'end_date' => $date,
@@ -109,7 +108,6 @@ public function store(Request $request)
             'streak_count' => 1,
         ]);
     }
-    // Jika tidak masuk ke dua kondisi di atas, currentStreak tetap null
 
     $mood->load('moodType', 'tags');
 
@@ -122,6 +120,7 @@ public function store(Request $request)
         ]
     ], 201);
 }
+
 
 
     /**
