@@ -25,7 +25,33 @@ class PublicMoodController extends Controller
                 });
             });
         }
-            
+        
+        $sortBy = $request->input('sort_by', 'date');
+        $sortOrder = $request->input('sort_order', 'desc');
+
+        $allowedSorts = ['date', 'user_name', 'mood_type'];
+
+            if (in_array($sortBy, $allowedSorts)) {
+            if ($sortBy === 'user_name') {
+                // Sort berdasarkan user name via relasi user
+                $query->join('users', 'moods.user_id', '=', 'users.id')
+                    ->orderBy('users.name', $sortOrder)
+                    ->select('moods.*');
+            } elseif ($sortBy === 'mood_type') {
+                // Sort berdasarkan nama mood type (asumsi mood_type table punya kolom 'name')
+                $query->join('mood_types', 'moods.mood_type_id', '=', 'mood_types.id')
+                    ->orderBy('mood_types.name', $sortOrder)
+                    ->select('moods.*');
+            } else {
+                // Sort by date atau kolom langsung di moods
+                $query->orderBy($sortBy, $sortOrder);
+            }
+        } else {
+            // default sorting jika kolom tidak valid
+            $query->orderBy('date', 'desc');
+        }
+
+
         $perPage = $request->input('per_page', 10);
         $moods = $query->orderBy('date', 'desc')->paginate($perPage);
 
