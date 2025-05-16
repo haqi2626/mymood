@@ -8,7 +8,7 @@ use App\Http\Controllers\Api\AvatarController;
 use App\Http\Controllers\Api\MoodController;
 use App\Http\Controllers\Api\MoodStreakController;
 use App\Http\Controllers\Api\MoodTypeController;
-use App\Http\Controllers\API\PublicMoodController;
+use App\Http\Controllers\Api\PublicMoodController;
 use App\Http\Controllers\Api\TagController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\NewPasswordController;
