@@ -16,6 +16,16 @@ class PublicMoodController extends Controller
             $query->whereBetween('date', [$request->start_date, $request->end_date]);
         }
 
+            if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('note', 'like', "%{$search}%")
+                ->orWhereHas('user', function ($q2) use ($search) {
+                    $q2->where('name', 'like', "%{$search}%");
+                });
+            });
+        }
+            
         $perPage = $request->input('per_page', 10);
         $moods = $query->orderBy('date', 'desc')->paginate($perPage);
 
