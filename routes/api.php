@@ -55,4 +55,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('mood-streaks', MoodStreakController::class)->names('mood-streaks.index'); 
 });
 
-Route::apiResource('/public-moods', [PublicMoodController::class]);
+Route::apiResource('/public-moods', PublicMoodController::class);
+
