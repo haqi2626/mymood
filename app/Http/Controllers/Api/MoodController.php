@@ -50,6 +50,7 @@ class MoodController extends Controller
             'date' => 'required|date',
             'tags' => 'nullable|array',
             'tags.*' => 'exists:tags,id',
+            'is_public' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -75,6 +76,7 @@ class MoodController extends Controller
         // Create new mood
         $moodData = $request->except('tags');
         $moodData['user_id'] = $user->id;
+        $moodData['is_public'] = $request->input('is_public', false);
         $mood = Mood::create($moodData);
 
         if ($request->has('tags')) {
@@ -89,7 +91,7 @@ class MoodController extends Controller
         $today = Carbon::today();
 
         // Ensure end_date is a Carbon instance
-        if ($latestStreak && $latestStreak->end_date instanceof Carbon) {
+        if ($latestStreak){
             $endDate = $latestStreak->end_date;
 
             // Check if the date is consecutive to the latest streak
@@ -144,6 +146,7 @@ class MoodController extends Controller
             'date' => 'nullable|date',
             'tags' => 'nullable|array',
             'tags.*' => 'exists:tags,id',
+            'is_public' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -167,6 +170,11 @@ class MoodController extends Controller
 
         if ($request->has('tags')) {
             $mood->tags()->sync($request->tags);
+        }
+
+        if ($request->has('is_public')) {
+            $mood->is_public = $request->is_public;
+            $mood->save();
         }
 
         // Load relationships for response

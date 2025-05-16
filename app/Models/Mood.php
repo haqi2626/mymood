@@ -15,10 +15,12 @@ class Mood extends Model
         'color', 
         'emoji', 
         'note', 
-        'date'
+        'date',
+        'is_public'
     ];
 
     protected $casts = [
+        'is_public' => 'boolean',
         'date' => 'date',
     ];
 
