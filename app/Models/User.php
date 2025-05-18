@@ -58,6 +58,7 @@ class User extends Authenticatable
     }
 
 
+
     public function themes()
     {
         return $this->hasMany(Theme::class);
