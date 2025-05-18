@@ -79,11 +79,15 @@ class AuthController extends Controller
         ]);
 
         $user->load('avatar');
+// generate Sanctum token
+        $token = $user->createToken('token')->plainTextToken;
 
         return response()->json([
             'message' => 'User berhasil terdaftar',
-            'user' => $user
+            'user' => $user,
+            'token' => $token
         ], 201);
+
     }
 
     //get user
