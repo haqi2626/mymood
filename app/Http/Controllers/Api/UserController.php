@@ -9,27 +9,48 @@ use App\Models\User;
 
 class UserController extends Controller
 {
-public function updateAvatar(Request $request)
-{
-    $request->validate([
-        'avatar_id' => 'required|exists:avatars,id',
-    ]);
+    public function updateAvatar(Request $request)
+    {
+        $request->validate([
+            'avatar_id' => 'required|exists:avatars,id',
+        ]);
 
-    $user = Auth::user();
+        $authUser = Auth::user();
 
-    if (!$user || !($user instanceof \App\Models\User)) {
-        return response()->json(['message' => 'Unauthorized or invalid user'], 401);
+        if (!$authUser || !($authUser instanceof User)) {
+            return response()->json(['message' => 'Unauthorized or invalid user'], 401);
+        }
+
+        $authUser->avatar_id = $request->avatar_id;
+        $authUser->save();
+
+        // Ambil ulang user dari database untuk memastikan instance Eloquent
+        $user = User::with('avatar')->find($authUser->id);
+
+        return response()->json([
+            'message' => 'Avatar updated successfully',
+            'user' => $this->formatUserData($user),
+        ]);
     }
 
-    $user->avatar_id = $request->avatar_id;
-    $user->save();
+    public function getProfile()
+    {
+        $authUser = Auth::user();
 
-    // Load relasi avatar agar bisa dimasukkan ke respons
-    $user->load('avatar');
+        if (!$authUser || !($authUser instanceof User)) {
+            return response()->json(['message' => 'Unauthorized or invalid user'], 401);
+        }
 
-    return response()->json([
-        'message' => 'Avatar updated successfully',
-        'user' => [
+        $user = User::with('avatar')->find($authUser->id);
+
+        return response()->json([
+            'user' => $this->formatUserData($user),
+        ]);
+    }
+
+    private function formatUserData($user)
+    {
+        return [
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
@@ -41,8 +62,6 @@ public function updateAvatar(Request $request)
             'role' => $user->role,
             'created_at' => $user->created_at,
             'updated_at' => $user->updated_at,
-        ],
-    ]);
-}
-
+        ];
+    }
 }

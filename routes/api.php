@@ -37,9 +37,15 @@ Route::get('email/verify/{id}/{hash}', [VerifyEmailController::class, '__invoke'
 
 
 Route::middleware('auth:sanctum')->group(function () {
-Route::get('/avatars', [AvatarController::class, 'index']);
-Route::get('/avatars/{id}', [AvatarController::class, 'show']);
-Route::put('/user/avatar', [UserController::class, 'updateAvatar']);
+    // List avatar
+    Route::get('/avatars', [AvatarController::class, 'index']);
+    Route::get('/avatars/{id}', [AvatarController::class, 'show']);
+
+    // Ambil profil user yang sedang login
+    Route::get('/user', [UserController::class, 'getProfile']); // <-- Tambahkan ini
+
+    // Update avatar user
+    Route::put('/user', [UserController::class, 'updateAvatar']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
