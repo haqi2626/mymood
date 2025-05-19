@@ -57,7 +57,7 @@ class UserController extends Controller
             'avatar_id' => $user->avatar_id,
             'avatar' => $user->avatar ? [
                 'id' => $user->avatar->id,
-                'avatar_path' => $user->avatar->avatar_path,
+                'avatar_path' => url($user->avatar->avatar_path),
             ] : null,
             'role' => $user->role,
             'created_at' => $user->created_at,
