@@ -40,7 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [UserController::class, 'getProfile']); // <-- Tambahkan ini
 
     // Update avatar user
-    Route::put('/user', [UserController::class, 'updateAvatar']);
+    Route::put('/user', [UserController::class, 'updateProfile']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
