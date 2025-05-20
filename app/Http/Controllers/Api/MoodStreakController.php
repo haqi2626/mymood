@@ -116,26 +116,27 @@ class MoodStreakController extends Controller
         ]);
     }
     // MoodStreakController.php
-        public function getStreak()
-    {
-        $user = Auth::user();
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User tidak ditemukan (Auth gagal)',
-            ], 401);
-        }
+public function getStreak()
+{
+    $user = Auth::user();
 
-        // Debug output user info
+    $latestStreak = MoodStreak::where('user_id', $user->id)
+        ->orderByDesc('end_date')
+        ->first();
+
+    if (!$latestStreak) {
         return response()->json([
             'success' => true,
-            'message' => 'User ditemukan',
-            'user' => [
-                'id' => $user->id,
-                'email' => $user->email,
-            ],
+            'data' => [],
+            'debug' => "Mood streak kosong untuk user_id={$user->id}",
         ]);
     }
+
+    return response()->json([
+        'success' => true,
+        'data' => $latestStreak,
+    ]);
+}
 
 
 
