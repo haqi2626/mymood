@@ -119,6 +119,12 @@ class MoodStreakController extends Controller
     public function getStreak()
     {
         $user = Auth::user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User tidak ditemukan (Auth gagal)',
+            ], 401);
+        }
 
         $latestStreak = MoodStreak::where('user_id', $user->id)
             ->orderByDesc('end_date')
@@ -136,5 +142,6 @@ class MoodStreakController extends Controller
             'data' => $latestStreak
         ]);
     }
+
 
 }
