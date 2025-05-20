@@ -94,6 +94,7 @@ class MoodController extends Controller
         if ($latestStreak){
             $endDate = Carbon::parse($latestStreak->end_date);
 
+
             // Check if the date is consecutive to the latest streak
             if ($endDate->copy()->addDay()->isSameDay($date)) {
                 // Continue the streak

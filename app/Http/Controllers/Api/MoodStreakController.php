@@ -115,4 +115,26 @@ class MoodStreakController extends Controller
             'data' => $mood
         ]);
     }
+    // MoodStreakController.php
+    public function getStreak()
+    {
+        $user = Auth::user();
+
+        $latestStreak = MoodStreak::where('user_id', $user->id)
+            ->orderByDesc('end_date')
+            ->first();
+
+        if (!$latestStreak) {
+            return response()->json([
+                'success' => true,
+                'data' => []
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $latestStreak
+        ]);
+    }
+
 }
