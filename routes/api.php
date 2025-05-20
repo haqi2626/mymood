@@ -17,11 +17,6 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 
 
-// Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
-//     return $request->user();
-// });
-
-
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy']);
     Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store']);

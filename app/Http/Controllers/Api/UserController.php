@@ -9,10 +9,12 @@ use App\Models\User;
 
 class UserController extends Controller
 {
-    public function updateAvatar(Request $request)
+    public function updateProfile(Request $request)
     {
         $request->validate([
-            'avatar_id' => 'required|exists:avatars,id',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . Auth::id(),
+            'avatar_id' => 'nullable|exists:avatars,id',
         ]);
 
         $authUser = Auth::user();
@@ -21,17 +23,23 @@ class UserController extends Controller
             return response()->json(['message' => 'Unauthorized or invalid user'], 401);
         }
 
-        $authUser->avatar_id = $request->avatar_id;
+        $authUser->name = $request->name;
+        $authUser->email = $request->email;
+
+        if ($request->avatar_id) {
+            $authUser->avatar_id = $request->avatar_id;
+        }
+
         $authUser->save();
 
-        // Ambil ulang user dari database untuk memastikan instance Eloquent
         $user = User::with('avatar')->find($authUser->id);
 
         return response()->json([
-            'message' => 'Avatar updated successfully',
+            'message' => 'Profile updated successfully',
             'user' => $this->formatUserData($user),
         ]);
     }
+
 
     public function getProfile()
     {
