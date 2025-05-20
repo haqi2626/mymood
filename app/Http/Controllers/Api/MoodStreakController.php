@@ -116,7 +116,7 @@ class MoodStreakController extends Controller
         ]);
     }
     // MoodStreakController.php
-    public function getStreak()
+        public function getStreak()
     {
         $user = Auth::user();
         if (!$user) {
@@ -126,22 +126,17 @@ class MoodStreakController extends Controller
             ], 401);
         }
 
-        $latestStreak = MoodStreak::where('user_id', $user->id)
-            ->orderByDesc('end_date')
-            ->first();
-
-        if (!$latestStreak) {
-            return response()->json([
-                'success' => true,
-                'data' => []
-            ]);
-        }
-
+        // Debug output user info
         return response()->json([
             'success' => true,
-            'data' => $latestStreak
+            'message' => 'User ditemukan',
+            'user' => [
+                'id' => $user->id,
+                'email' => $user->email,
+            ],
         ]);
     }
+
 
 
 }
