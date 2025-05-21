@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\MoodController;
 use App\Http\Controllers\Api\MoodStreakController;
 use App\Http\Controllers\Api\MoodTypeController;
 use App\Http\Controllers\Api\PublicMoodController;
+use App\Http\Controllers\Api\QuoteController;
 use App\Http\Controllers\Api\TagController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\NewPasswordController;
@@ -62,3 +63,5 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::apiResource('/public-moods', PublicMoodController::class);
 
+Route::get('/quotes', [QuoteController::class, 'index']);
+Route::get('/quotes/random', [QuoteController::class, 'random']);
