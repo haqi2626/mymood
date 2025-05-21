@@ -11,28 +11,17 @@ class UserController extends Controller
 {
     public function updateProfile(Request $request)
     {
-    $request->validate([
-        'name' => 'sometimes|required|string|max:255',
-        'email' => 'sometimes|required|email|max:255|unique:users,email,' . Auth::id(),
-        'avatar_id' => 'required|exists:avatars,id', // ini required karena kamu memang wajib kirim avatar_id
-    ]);
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . Auth::id(),
+            'avatar_id' => 'nullable|exists:avatars,id',
+        ]);
 
         $authUser = Auth::user();
 
         if (!$authUser || !($authUser instanceof User)) {
             return response()->json(['message' => 'Unauthorized or invalid user'], 401);
         }
-
-        if ($request->has('name')) {
-            $authUser->name = $request->name;
-        }
-        if ($request->has('email')) {
-            $authUser->email = $request->email;
-        }
-        if ($request->has('avatar_id')) {
-            $authUser->avatar_id = $request->avatar_id;
-        }
-
 
         $authUser->name = $request->name;
         $authUser->email = $request->email;
