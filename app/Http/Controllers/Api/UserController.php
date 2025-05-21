@@ -37,7 +37,7 @@ class UserController extends Controller
         return response()->json([
             'message' => 'Profile updated successfully',
             'user' => $this->formatUserData($user),
-        ]);
+        ], 200);
     }
 
 
