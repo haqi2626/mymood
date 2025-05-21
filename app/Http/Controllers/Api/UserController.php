@@ -9,36 +9,36 @@ use App\Models\User;
 
 class UserController extends Controller
 {
-    public function updateProfile(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email,' . Auth::id(),
-            'avatar_id' => 'nullable|exists:avatars,id',
-        ]);
+public function updateProfile(Request $request)
+{
+    $authUser = Auth::user();
 
-        $authUser = Auth::user();
-
-        if (!$authUser || !($authUser instanceof User)) {
-            return response()->json(['message' => 'Unauthorized or invalid user'], 401);
-        }
-
-        $authUser->name = $request->name;
-        $authUser->email = $request->email;
-
-        if ($request->avatar_id) {
-            $authUser->avatar_id = $request->avatar_id;
-        }
-
-        $authUser->save();
-
-        $user = User::with('avatar')->find($authUser->id);
-
-        return response()->json([
-            'message' => 'Profile updated successfully',
-            'user' => $this->formatUserData($user),
-        ], 200);
+    if (!$authUser || !($authUser instanceof User)) {
+        return response()->json(['message' => 'Unauthorized or invalid user'], 401);
     }
+
+    // Validasi hanya jika dikirim
+    $request->validate([
+        'name' => 'nullable|string|max:255',
+        'email' => 'nullable|email|max:255|unique:users,email,' . $authUser->id,
+        'avatar_id' => 'nullable|exists:avatars,id',
+    ]);
+
+    // Update hanya yang dikirim
+    if ($request->filled('name')) $authUser->name = $request->name;
+    if ($request->filled('email')) $authUser->email = $request->email;
+    if ($request->filled('avatar_id')) $authUser->avatar_id = $request->avatar_id;
+
+    $authUser->save();
+
+    $user = User::with('avatar')->find($authUser->id);
+
+    return response()->json([
+        'message' => 'Profile updated successfully',
+        'user' => $this->formatUserData($user),
+    ]);
+}
+
 
 
     public function getProfile()
